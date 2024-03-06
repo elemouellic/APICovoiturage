@@ -9,7 +9,6 @@ use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -17,6 +16,12 @@ use Symfony\Component\Routing\Attribute\Route;
 class CityController extends AbstractController
 {
 
+    /**
+     * Insert a new city
+     * @param Request $request The request object
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
     #[Route('/insertville', name: 'app_city_insert', methods: ['POST'])]
     public function insertCity(Request $request, EntityManagerInterface $em): JsonResponse
     {
@@ -62,6 +67,13 @@ class CityController extends AbstractController
         ]);
     }
 
+    /**
+     * Delete a city
+     * @param Request $request The request object
+     * @param int $id The city id
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
     #[Route('/deleteville/{id}', name: 'app_city_delete', methods: ['DELETE'])]
     public function deleteCity(Request $request, $id, EntityManagerInterface $em): JsonResponse
     {
@@ -84,6 +96,11 @@ class CityController extends AbstractController
         }
     }
 
+    /**
+     * List all the cities
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
     #[Route('/listeville', name: 'app_city_list', methods: ['GET'])]
     public function listAllCities(EntityManagerInterface $em): JsonResponse
     {
@@ -105,6 +122,11 @@ class CityController extends AbstractController
         return $this->json($data);
     }
 
+    /**
+     * List all the zip codes
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
     #[Route('/listecodepostal', name: 'app_zipcode_list', methods: ['GET'])]
     public function listAllZipCodes(EntityManagerInterface $em): JsonResponse
     {
