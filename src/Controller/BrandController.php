@@ -79,7 +79,7 @@ class BrandController extends AbstractController
             $em->remove($brand);
             $em->flush();
         } catch (Exception $e) {
-            throw new HttpException(400, "Error while deleting the brand: " . $e->getMessage());
+            throw new HttpException(400, "Error while deleting the brand");
         }
         return $this->json([
             'message' => 'Brand deleted successfully',

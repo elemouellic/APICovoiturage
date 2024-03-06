@@ -10,7 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -18,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class CarController extends AbstractController
 {
 
-/**
+    /**
      * Insert a new car
      * @param Request $request The request object
      * @param EntityManagerInterface $em The entity manager
@@ -74,5 +73,53 @@ class CarController extends AbstractController
             'brand' => $car->getIdentify()->getBrand(),
         ]);
     }
+
+    /**
+     * Delete a car
+     * @param Request $request The request object
+     * @param int $id The car id
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/deletevoiture/{id}', name: 'app_car_delete', methods: ['DELETE'])]
+    public function deleteCar(Request $request, int $id, EntityManagerInterface $em): JsonResponse
+    {
+        try {
+            $car = $em->getRepository(Car::class)->find($id);
+            if (!$car) {
+                throw new HttpException(404, 'No car found for id ' . $id);
+            }
+            $em->remove($car);
+            $em->flush();
+            return $this->json([
+                'message' => 'Car deleted successfully',
+            ]);
+        } catch (Exception $e) {
+            throw new HttpException(400, "Error while deleting the car: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * List all the cars
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/listevoiture', name: 'app_car_list', methods: ['GET'])]
+    public function listAllCas(EntityManagerInterface $em): JsonResponse
+    {
+        $cars = $em->getRepository(Car::class)->findAll();
+        $data = [];
+        foreach ($cars as $car) {
+            $data[] = [
+                'id' => $car->getId(),
+                'model' => $car->getModel(),
+                'matriculation' => $car->getMatriculation(),
+                'places' => $car->getPlaces(),
+                'brand' => $car->getIdentify()->getBrand(),
+            ];
+        }
+        return $this->json($data);
+    }
+
 
 }
