@@ -61,7 +61,7 @@ class CarController extends AbstractController
             $em->persist($car);
             $em->flush();
         } catch (Exception $e) {
-            throw new HttpException(400, "Error while creating the car: " . $e->getMessage());
+            throw new HttpException(400, "Error while creating the car");
         }
         // Return the car data
         return $this->json([
@@ -105,7 +105,7 @@ class CarController extends AbstractController
      * @return JsonResponse The response
      */
     #[Route('/listevoiture', name: 'app_car_list', methods: ['GET'])]
-    public function listAllCas(EntityManagerInterface $em): JsonResponse
+    public function listAllCars(EntityManagerInterface $em): JsonResponse
     {
         $cars = $em->getRepository(Car::class)->findAll();
         $data = [];
@@ -120,6 +120,5 @@ class CarController extends AbstractController
         }
         return $this->json($data);
     }
-
 
 }
