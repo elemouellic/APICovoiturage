@@ -55,39 +55,26 @@ class StudentController extends AbstractController
 //    }
 //}
 
+    /**
+     * Insert a new student
+     * @param Request $request The request object
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
     #[Route('/insertpersonne', name: 'app_student_insert', methods: ['POST'])]
-    public function insertPersonne(Request $request, EntityManagerInterface $em): JsonResponse
+    public function insertStudent(Request $request, EntityManagerInterface $em): JsonResponse
     {
-        // Retrieve the token from the TokenStorage
-        try {
-            $token = $this->tokenStorage->getToken();
-            // Check if the token exists
-            if ($token) {
-                // Get the user from the token
-                $userFromToken = $token->getUser();
-
-                // Get the JWT token of the user
-                $jwtToken = $token->getCredentials();
-            }
-        } catch (Exception $e) {
-            throw new HttpException(401, 'Invalid credentials.');
-        }
 
         // Serialize the request data
         $data = Utils::serializeRequestData($request);
 
         // Check if all necessary fields are present and not empty
-        if (empty($data['firstname']) || empty($data['name']) || empty($data['phone']) || empty($data['email'])) {
+        if (empty($data['firstname']) || empty($data['name']) || empty($data['phone']) || empty($data['email']) || empty($data['cityId']) || empty($data['carId'])) {
             throw new HttpException(400, 'Missing required fields.');
         } else {
-//            // Get or create the city
-//            $city = $this->getOrCreateCity($em, $data);
-//
-//            // Get or create the car
-//            $car = $this->getOrCreateCar($em, $data);
 
             // Create a new student
-            $student = $this->createStudent($data['firstname'], $data['name'], $data['phone'], $data['email'], $em);
+            $student = $this->createStudent($data['firstname'], $data['name'], $data['phone'], $data['email'], $data['cityId'], $data['carId'], $em);
 
             // Return the created student data
             return $this->json([
@@ -96,16 +83,41 @@ class StudentController extends AbstractController
                 'name' => $student->getName(),
                 'phone' => $student->getPhone(),
                 'email' => $student->getEmail(),
+                'city' => $student->getLive()->getName(),
+                'car' => $student->getPossess()->getModel(),
             ], 201);
         }
     }
 
-    private function createStudent(string $firstname, string $name, string $phone, string $email, EntityManagerInterface $em): Student
+    /**
+     * Create a new Student
+     * @param string $firstname The firstname
+     * @param string $name The name
+     * @param string $phone The phone
+     * @param string $email The email
+     * @param EntityManagerInterface $em The entity manager
+     * @return Student The created Student
+     */
+    private function createStudent(string $firstname, string $name, string $phone, string $email, int $cityId, ?int $carId, EntityManagerInterface $em): Student
     {
         // Get the user from the token
         $user = $this->tokenStorage->getToken()->getUser();
         // Check if the student already exists, phone and email must be unique
         $this->checkUniquePhoneAndEmail($phone, $email, $em);
+
+        $city = $em->getRepository(City::class)->find($cityId);
+        if (!$city) {
+            throw new HttpException(404, 'City not found');
+        }
+
+        // A student does not have to possess a car
+        $car = null;
+        if ($carId !== null) {
+            $car = $em->getRepository(Car::class)->find($carId);
+            if (!$car) {
+                throw new HttpException(404, 'Car not found');
+            }
+        }
 
         // Create a new Student
         try {
@@ -116,6 +128,9 @@ class StudentController extends AbstractController
             $student->setName($name);
             $student->setPhone($phone);
             $student->setEmail($email);
+
+            $student->setLive($city);
+            $student->setPossess($car);
 
             // Set the user as the register
             $student->setRegister($user);
@@ -132,9 +147,12 @@ class StudentController extends AbstractController
     }
 
     /**
-     * Private function to manage violations of unique constraints
+     * Check if a student with the same phone number or email already exists
+     * @param string $phone The phone number
+     * @param string $email The email
+     * @param EntityManagerInterface $em The entity manager
+     * @return void
      */
-
     private function checkUniquePhoneAndEmail(string $phone, string $email, EntityManagerInterface $em): void
     {
         $existingPhone = $em->getRepository(Student::class)->findOneBy(['phone' => $phone]);
@@ -147,71 +165,5 @@ class StudentController extends AbstractController
         }
     }
 
-//    private function checkUniqueCar(string $matriculation, EntityManagerInterface $em): void
-//    {
-//        $existingMatriculation = $em->getRepository(Car::class)->findOneBy(['matriculation' => $matriculation]);
-//        if ($existingMatriculation) {
-//            throw new HttpException(409, 'A car with the same matriculation already exist.');
-//        }
-//    }
-//
-//
-//    private function getOrCreateCity(EntityManagerInterface $em, array $data): City
-//    {
-//        // Get the city from the database
-//        $city = $em->getRepository(City::class)->findOneBy(['name' => $data['city']]);
-//
-//        if (!$city) {
-//            $city = new City();
-//            $city->setName($data['city']);
-//            if (isset($data['zipcode'])) {
-//                $city->setZipCode($data['zipcode']);
-//            } else {
-//                throw new HttpException(400, 'Missing required fields.');
-//            }
-//            $em->persist($city);
-//            $em->flush();
-//        }
-//
-//        return $city;
-//    }
-//
-//    private function getOrCreateCar(EntityManagerInterface $em, array $data): Car
-//    {
-//        try {
-//            $this->checkUniqueCar($data['matriculation'], $em);
-//
-//            // Get the car from the database
-//            $car = $em->getRepository(Car::class)->findOneBy(['model' => $data['car']]);
-//
-//            if (!$car) {
-//                $car = new Car();
-//                $car->setModel($data['model']);
-//                $car->setMatriculation($data['matriculation']);
-//                $car->setPlaces($data['places']);
-//                // Check if the brand field is present and create a new Brand entity if it does not exist
-//                if (isset($data['brand'])) {
-//                    $brand = $em->getRepository(Brand::class)->findOneBy(['carBrand' => $data['brand']]);
-//                    if (!$brand) {
-//                        try {
-//                            $brand = new Brand();
-//                            $brand->setBrand($data['brand']);
-//                            $em->persist($brand);
-//                            $em->flush();
-//                        } catch (Exception $e){
-//                            throw new HttpException(404, "titi");
-//                        }
-//                    }
-//                    $car->setIdentify($brand);
-//                }
-//                $em->persist($car);
-//                $em->flush();
-//            }
-//            return $car;
-//        } catch (Exception $e){
-//            throw new HttpException(404, "toto");
-//        }
-//
-//    }
 
 }
