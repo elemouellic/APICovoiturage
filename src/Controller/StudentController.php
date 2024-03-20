@@ -143,6 +143,39 @@ class StudentController extends AbstractController
     }
 
     /**
+     * Delete a student
+     * @param Request $request The request object
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/deletepersonne/{id}', name: 'app_student_delete', methods: ['DELETE'])]
+    public function deleteStudent(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        // Get the student from the database
+        $id = $request->get('id');
+        $student = $em->getRepository(Student::class)->find($id);
+        if (!$student) {
+            throw new HttpException(404, 'Student not found');
+        }
+
+        // Check if the student is an admin
+        if(in_array('ROLE_ADMIN', $student->getRegister()->getRoles())){
+            throw new HttpException(403, 'You are not allowed to delete an admin');
+        }
+
+        // Get the user associated with the student
+        $user = $student->getRegister();
+
+        $em->remove($student);
+        $em->remove($user);
+        $em->flush();
+        return $this->json([
+            'message' => 'Student deleted successfully',
+        ]);
+    }
+
+
+    /**
      * Create a new Student
      * @param string $firstname The firstname
      * @param string $name The name
