@@ -174,6 +174,54 @@ class StudentController extends AbstractController
         ]);
     }
 
+    /**
+     * Get a student by id
+     * @param Request $request The request object
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/selectpersonne/{id}', name: 'app_student_get', methods: ['GET'])]
+    public function getStudent(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $id = $request->get('id');
+        $student = $em->getRepository(Student::class)->find($id);
+        if (!$student) {
+            throw new HttpException(404, 'Student not found');
+        }
+        return $this->json([
+            'id' => $student->getId(),
+            'firstname' => $student->getFirstname(),
+            'name' => $student->getName(),
+            'phone' => $student->getPhone(),
+            'email' => $student->getEmail(),
+            'city' => $student->getLive()->getName(),
+            'car' => $student->getPossess() ? $student->getPossess()->getModel() : null,
+        ]);
+    }
+
+    /**
+     * List all the students
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/listpersonne', name: 'app_student_list', methods: ['GET'])]
+    public function listAllStudents(EntityManagerInterface $em): JsonResponse
+    {
+        $students = $em->getRepository(Student::class)->findAll();
+        $data = [];
+        foreach ($students as $student) {
+            $data[] = [
+                'id' => $student->getId(),
+                'firstname' => $student->getFirstname(),
+                'name' => $student->getName(),
+                'phone' => $student->getPhone(),
+                'email' => $student->getEmail(),
+                'city' => $student->getLive()->getName(),
+                'car' => $student->getPossess() ? $student->getPossess()->getModel() : null,
+            ];
+        }
+        return $this->json($data);
+    }
 
     /**
      * Create a new Student
