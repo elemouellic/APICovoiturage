@@ -12,6 +12,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Class BrandController
+ * @package App\Controller
+ */
 #[Route('/api')]
 class BrandController extends AbstractController
 {
@@ -63,13 +67,12 @@ class BrandController extends AbstractController
 
     /**
      * Delete a brand
-     * @param Request $request The request object
      * @param int $id The brand id
      * @param EntityManagerInterface $em The entity manager
      * @return JsonResponse The response
      */
     #[Route('/deletemarque/{id}', name: 'app_brand_delete', methods: ['DELETE'])]
-    public function deleteBrand(Request $request, int $id, EntityManagerInterface $em): JsonResponse
+    public function deleteBrand(int $id, EntityManagerInterface $em): JsonResponse
     {
         $brand = $em->getRepository(Brand::class)->find($id);
         if (!$brand) {

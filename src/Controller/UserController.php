@@ -4,19 +4,20 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Utils\Utils;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Class UserController
+ * @package App\Controller
+ */
 #[Route('/api')]
 class UserController extends AbstractController
 {
@@ -25,7 +26,11 @@ class UserController extends AbstractController
     private UserPasswordHasherInterface $passwordHasher;
     private JWTTokenManagerInterface $JWTManager;
 
-    // Constructor to inject the password hasher and the JWT token manager
+    /**
+     * UserController constructor.
+     * @param UserPasswordHasherInterface $passwordHasher The password hasher
+     * @param JWTTokenManagerInterface $JWTManager The JWT token manager
+     */
     public function __construct(UserPasswordHasherInterface $passwordHasher, JWTTokenManagerInterface $JWTManager)
     {
         $this->passwordHasher = $passwordHasher;
@@ -34,6 +39,10 @@ class UserController extends AbstractController
 
 
     /**
+     * Register a new user
+     * @param Request $request The request object
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
      * @throws Exception
      */
     #[Route('/register', name: 'app_user_add', methods: ['POST'])]
@@ -83,6 +92,14 @@ class UserController extends AbstractController
 
     }
 
+    /**
+     * Log in a user
+     * @param Request $request The request object
+     * @param EntityManagerInterface $em The entity manager
+     * @param UserPasswordHasherInterface $passwordHasher The password hasher
+     * @param JWTTokenManagerInterface $JWTManager The JWT token manager
+     * @return JsonResponse The response
+     */
     #[Route('/login', name: 'app_login', methods: ['POST'])]
     public function login(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, JWTTokenManagerInterface $JWTManager): JsonResponse
     {
@@ -116,6 +133,5 @@ class UserController extends AbstractController
             ],
         ]);
     }
-
 
 }

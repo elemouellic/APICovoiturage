@@ -13,6 +13,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Class BrandController
+ * @package App\Controller
+ */
 #[Route('/api')]
 class CarController extends AbstractController
 {
@@ -76,13 +80,12 @@ class CarController extends AbstractController
 
     /**
      * Delete a car
-     * @param Request $request The request object
      * @param int $id The car id
      * @param EntityManagerInterface $em The entity manager
      * @return JsonResponse The response
      */
     #[Route('/deletevoiture/{id}', name: 'app_car_delete', methods: ['DELETE'])]
-    public function deleteCar(Request $request, int $id, EntityManagerInterface $em): JsonResponse
+    public function deleteCar(int $id, EntityManagerInterface $em): JsonResponse
     {
         try {
             $car = $em->getRepository(Car::class)->find($id);

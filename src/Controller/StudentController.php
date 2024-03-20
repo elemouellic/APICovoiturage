@@ -2,26 +2,24 @@
 
 namespace App\Controller;
 
-use App\Entity\Brand;
 use App\Entity\Car;
 use App\Entity\City;
 use App\Entity\Student;
-use App\Entity\User;
 use App\Utils\Utils;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTDecodeFailureException;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
+/**
+ * Class StudentController
+ * @package App\Controller
+ */
 #[Route('/api')]
 class StudentController extends AbstractController
 {
@@ -29,31 +27,16 @@ class StudentController extends AbstractController
     private TokenStorageInterface $tokenStorage;
     private JWTTokenManagerInterface $JWTManager;
 
-    // Constructor to inject the token storage
+    /**
+     * StudentController constructor.
+     * @param TokenStorageInterface $tokenStorage
+     * @param JWTTokenManagerInterface $JWTManager
+     */
     public function __construct(TokenStorageInterface $tokenStorage, JWTTokenManagerInterface $JWTManager)
     {
         $this->tokenStorage = $tokenStorage;
         $this->JWTManager = $JWTManager;
     }
-
-
-
-//#[Route('/testtoken', name: 'app_test_token', methods: ['GET'])]
-//public function testToken(): JsonResponse
-//{
-//    // Retrieve the token from the request
-//    $token = $this->JWTManager->getUserIdClaim();
-//    $storage = $this->tokenStorage->getToken();
-//
-//
-//    // Check if the token exists
-//    if ($token) {
-//        $jwtToken = $storage->getCredentials();
-//            return new JsonResponse(['message' => 'Valid token', $jwtToken], 200);
-//    } else {
-//        return new JsonResponse(['message' => 'No token'], 401);
-//    }
-//}
 
     /**
      * Insert a new student
@@ -298,6 +281,5 @@ class StudentController extends AbstractController
             throw new HttpException(409, 'A student with the same email already exist.');
         }
     }
-
 
 }

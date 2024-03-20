@@ -12,6 +12,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Class CityController
+ * @package App\Controller
+ */
 #[Route('/api')]
 class CityController extends AbstractController
 {
@@ -69,13 +73,12 @@ class CityController extends AbstractController
 
     /**
      * Delete a city
-     * @param Request $request The request object
      * @param int $id The city id
      * @param EntityManagerInterface $em The entity manager
      * @return JsonResponse The response
      */
     #[Route('/deleteville/{id}', name: 'app_city_delete', methods: ['DELETE'])]
-    public function deleteCity(Request $request, $id, EntityManagerInterface $em): JsonResponse
+    public function deleteCity(int $id, EntityManagerInterface $em): JsonResponse
     {
 
         // Get the city from the database

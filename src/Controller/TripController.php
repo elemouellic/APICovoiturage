@@ -12,10 +12,13 @@ use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Class TripController
+ * @package App\Controller
+ */
 #[Route('/api')]
 class TripController extends AbstractController
 {
@@ -146,7 +149,6 @@ class TripController extends AbstractController
 
     /**
      * Search for trips
-     * @param Request $request The request object
      * @param int $idCityStart The start city id
      * @param int $idCityArrival The arrival city id
      * @param string $dateTravel The travel date
@@ -155,7 +157,7 @@ class TripController extends AbstractController
      * @throws Exception
      */
     #[Route('/recherchetrajet/{idCityStart}/{idCityArrival}/{dateTravel}', name: 'app_trip_search', methods: ['GET'])]
-    public function searchTrip(Request $request, int $idCityStart, int $idCityArrival, string $dateTravel, EntityManagerInterface $em): JsonResponse
+    public function searchTrip(int $idCityStart, int $idCityArrival, string $dateTravel, EntityManagerInterface $em): JsonResponse
     {
         // Get the City objects for the start_id and arrive_id
         $start = $em->getRepository(City::class)->find($idCityStart);
@@ -251,13 +253,12 @@ class TripController extends AbstractController
 
     /**
      * Get the passengers of a trip
-     * @param Request $request The request object
      * @param EntityManagerInterface $em The entity manager
      * @param int $studentid The student id
      * @return JsonResponse The response
      */
     #[Route('/listeinscriptionuser/{studentid}', name: 'app_trip_get_student', methods: ['GET'])]
-    public function getStudentOnTrips(Request $request, EntityManagerInterface $em, int $studentid): JsonResponse
+    public function getStudentOnTrips(EntityManagerInterface $em, int $studentid): JsonResponse
     {
         // Get the student from the database
         $student = $em->getRepository(Student::class)->find($studentid);
@@ -363,13 +364,12 @@ class TripController extends AbstractController
 
     /**
      * Delete a trip
-     * @param Request $request The request object
      * @param int $id The trip id
      * @param EntityManagerInterface $em The entity manager
      * @return JsonResponse The response
      */
     #[Route('/deletetrajet/{id}', name: 'app_trip_delete', methods: ['DELETE'])]
-    public function deleteTrip(Request $request, int $id, EntityManagerInterface $em): JsonResponse
+    public function deleteTrip(int $id, EntityManagerInterface $em): JsonResponse
     {
         // Get the trip from the database
         $trip = $em->getRepository(Trip::class)->find($id);
@@ -391,14 +391,13 @@ class TripController extends AbstractController
 
     /**
      * Delete a participation
-     * @param Request $request The request object
      * @param int $tripid The trip id
      * @param int $studentid The student id
      * @param EntityManagerInterface $em The entity manager
      * @return JsonResponse The response
      */
     #[Route('/deleteinscription/{tripid}/{studentid}', name: 'app_trip_delete_participation', methods: ['DELETE'])]
-    public function deleteParticipation(Request $request, int $tripid, int $studentid, EntityManagerInterface $em): JsonResponse
+    public function deleteParticipation(int $tripid, int $studentid, EntityManagerInterface $em): JsonResponse
     {
         try {
             $trip = $em->getRepository(Trip::class)->find($tripid);
