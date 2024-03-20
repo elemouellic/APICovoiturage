@@ -24,13 +24,21 @@ class City
     #[ORM\OneToMany(targetEntity: Student::class, mappedBy: 'live')]
     private Collection $live;
 
+//    #[ORM\OneToMany(targetEntity: Trip::class, mappedBy: 'start')]
+//    private Collection $trips;
+
     #[ORM\OneToMany(targetEntity: Trip::class, mappedBy: 'start')]
-    private Collection $trips;
+    private Collection $startTrips;
+
+    #[ORM\OneToMany(targetEntity: Trip::class, mappedBy: 'arrive')]
+    private Collection $arriveTrips;
 
     public function __construct()
     {
         $this->live = new ArrayCollection();
-        $this->trips = new ArrayCollection();
+//        $this->trips = new ArrayCollection();
+        $this->startTrips = new ArrayCollection();
+        $this->arriveTrips = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -95,27 +103,69 @@ class City
     /**
      * @return Collection<int, Trip>
      */
-    public function getTrips(): Collection
+    public function getStartTrips(): Collection
     {
-        return $this->trips;
+        return $this->startTrips;
     }
 
-    public function addTrip(Trip $trip): static
+    public function addStartTrip(Trip $trip): static
     {
-        if (!$this->trips->contains($trip)) {
-            $this->trips->add($trip);
+        if (!$this->startTrips->contains($trip)) {
+            $this->startTrips->add($trip);
             $trip->setStart($this);
         }
 
         return $this;
     }
 
-    public function removeTrip(Trip $trip): static
+//    public function removeTrip(Trip $trip): static
+//    {
+//        if ($this->trips->removeElement($trip)) {
+//            // set the owning side to null (unless already changed)
+//            if ($trip->getStart() === $this) {
+//                $trip->setStart(null);
+//            }
+//        }
+//
+//        return $this;
+//    }
+
+    public function removeStartTrip(Trip $trip): static
     {
-        if ($this->trips->removeElement($trip)) {
+        if ($this->startTrips->removeElement($trip)) {
             // set the owning side to null (unless already changed)
             if ($trip->getStart() === $this) {
                 $trip->setStart(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Trip>
+     */
+    public function getArriveTrips(): Collection
+    {
+        return $this->arriveTrips;
+    }
+
+    public function addArriveTrip(Trip $trip): static
+    {
+        if (!$this->arriveTrips->contains($trip)) {
+            $this->arriveTrips->add($trip);
+            $trip->setArrive($this);
+        }
+
+        return $this;
+    }
+
+    public function removeArriveTrip(Trip $trip): static
+    {
+        if ($this->arriveTrips->removeElement($trip)) {
+            // set the owning side to null (unless already changed)
+            if ($trip->getArrive() === $this) {
+                $trip->setArrive(null);
             }
         }
 

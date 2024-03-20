@@ -31,10 +31,10 @@ class Trip
     #[ORM\ManyToOne(inversedBy: 'drive')]
     private ?Student $drive = null;
 
-    #[ORM\ManyToOne(inversedBy: 'trips')]
+    #[ORM\ManyToOne(targetEntity: City::class, inversedBy: 'startTrips')]
     private ?City $start = null;
 
-    #[ORM\ManyToOne(inversedBy: 'trips')]
+    #[ORM\ManyToOne(targetEntity: City::class, inversedBy: 'arriveTrips')]
     private ?City $arrive = null;
 
     public function __construct()
