@@ -154,66 +154,142 @@ class TripController extends AbstractController
      * @return JsonResponse The response
      * @throws Exception
      */
-#[Route('/recherchetrajet/{idCityStart}/{idCityArrival}/{dateTravel}', name: 'app_trip_search', methods: ['GET'])]
-public function searchTrip(Request $request, int $idCityStart, int $idCityArrival, string $dateTravel, EntityManagerInterface $em): JsonResponse
-{
-    // Get the City objects for the start_id and arrive_id
-    $start = $em->getRepository(City::class)->find($idCityStart);
-    if (!$start) {
-        throw new HttpException(404, 'Start city not found');
-    }
+    #[Route('/recherchetrajet/{idCityStart}/{idCityArrival}/{dateTravel}', name: 'app_trip_search', methods: ['GET'])]
+    public function searchTrip(Request $request, int $idCityStart, int $idCityArrival, string $dateTravel, EntityManagerInterface $em): JsonResponse
+    {
+        // Get the City objects for the start_id and arrive_id
+        $start = $em->getRepository(City::class)->find($idCityStart);
+        if (!$start) {
+            throw new HttpException(404, 'Start city not found');
+        }
 
-    $arrive = $em->getRepository(City::class)->find($idCityArrival);
-    if (!$arrive) {
-        throw new HttpException(404, 'Arrival city not found');
-    }
+        $arrive = $em->getRepository(City::class)->find($idCityArrival);
+        if (!$arrive) {
+            throw new HttpException(404, 'Arrival city not found');
+        }
 
-    // Create DateTime objects for the start and end of the travel date
-    $travelDateStart = DateTime::createFromFormat('Y-m-d H:i:s', $dateTravel . ' 00:00:00');
-    if (!$travelDateStart) {
-        throw new HttpException(400, 'Invalid date format. Expected format is Y-m-d.');
-    }
+        // Create DateTime objects for the start and end of the travel date
+        $travelDateStart = DateTime::createFromFormat('Y-m-d H:i:s', $dateTravel . ' 00:00:00');
+        if (!$travelDateStart) {
+            throw new HttpException(400, 'Invalid date format. Expected format is Y-m-d.');
+        }
 
-    $travelDateEnd = DateTime::createFromFormat('Y-m-d H:i:s', $dateTravel . ' 23:59:59');
-    if (!$travelDateEnd) {
-        throw new HttpException(400, 'Invalid date format. Expected format is Y-m-d.');
-    }
+        $travelDateEnd = DateTime::createFromFormat('Y-m-d H:i:s', $dateTravel . ' 23:59:59');
+        if (!$travelDateEnd) {
+            throw new HttpException(400, 'Invalid date format. Expected format is Y-m-d.');
+        }
 
-    // Get the trips from the database with the given start, arrive and travel date
-    $query = $em->createQuery(
-        'SELECT t
+        // Get the trips from the database with the given start, arrive and travel date
+        $query = $em->createQuery(
+            'SELECT t
         FROM App\Entity\Trip t
         WHERE t.start = :start
         AND t.arrive = :arrive
         AND t.traveldate BETWEEN :travelDateStart AND :travelDateEnd'
-    )->setParameters([
-        'start' => $start,
-        'arrive' => $arrive,
-        'travelDateStart' => $travelDateStart,
-        'travelDateEnd' => $travelDateEnd,
-    ]);
+        )->setParameters([
+            'start' => $start,
+            'arrive' => $arrive,
+            'travelDateStart' => $travelDateStart,
+            'travelDateEnd' => $travelDateEnd,
+        ]);
 
-    $trips = $query->getResult();
+        $trips = $query->getResult();
 
-    if (!$trips) {
-        throw new HttpException(404, 'No trip found');
+        if (!$trips) {
+            throw new HttpException(404, 'No trip found');
+        }
+
+        // Prepare the trips data
+        $data = [];
+        foreach ($trips as $trip) {
+            $data[] = [
+                'id' => $trip->getId(),
+                'drive_id' => $trip->getDrive()->getId(),
+                'start_id' => $trip->getStart()->getId(),
+                'arrive_id' => $trip->getArrive()->getId(),
+                'kmdistance' => $trip->getKmDistance(),
+                'traveldate' => $trip->getTravelDate()->format('Y-m-d H:i:s'), // Include the full date and time
+                'placesoffered' => $trip->getPlacesOffered(),
+            ];
+        }
+
+        // Return the trips
+        return $this->json($data);
     }
 
-    // Prepare the trips data
-    $data = [];
-    foreach ($trips as $trip) {
-        $data[] = [
-            'id' => $trip->getId(),
-            'drive_id' => $trip->getDrive()->getId(),
-            'start_id' => $trip->getStart()->getId(),
-            'arrive_id' => $trip->getArrive()->getId(),
-            'kmdistance' => $trip->getKmDistance(),
-            'traveldate' => $trip->getTravelDate()->format('Y-m-d H:i:s'), // Include the full date and time
-            'placesoffered' => $trip->getPlacesOffered(),
-        ];
+    /**
+     * Get the driver of a trip
+     * @param int $tripid The trip id
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/listeinscriptionconducteur/{tripid}', name: 'app_trip_get_driver', methods: ['GET'])]
+    public function getDriverOnTrip(int $tripid, EntityManagerInterface $em): JsonResponse
+    {
+        // Get the trip from the database
+        $trip = $em->getRepository(Trip::class)->find($tripid);
+
+        // If the trip is not found, return an error
+        if (!$trip) {
+            throw new HttpException(404, 'Trip not found');
+        }
+
+        // Get the driver of the trip
+        $driver = $trip->getDrive();
+
+        // Return the driver data
+        return $this->json([
+            'id' => $driver->getId(),
+            'firstname' => $driver->getFirstname(),
+            'name' => $driver->getName(),
+            'phone' => $driver->getPhone(),
+            'email' => $driver->getEmail(),
+            'city' => $driver->getLive()->getName(),
+            'car' => $driver->getPossess()?->getModel(),
+        ]);
     }
 
-    // Return the trips
-    return $this->json($data);
-}}
+    /**
+     * Get the passengers of a trip
+     * @param Request $request The request object
+     * @param EntityManagerInterface $em The entity manager
+     * @param int $studentid The student id
+     * @return JsonResponse The response
+     */
+    #[Route('/listeinscriptionuser/{studentid}', name: 'app_trip_get_student', methods: ['GET'])]
+    public function getStudentOnTrips(Request $request, EntityManagerInterface $em, int $studentid): JsonResponse
+    {
+        // Get the student from the database
+        $student = $em->getRepository(Student::class)->find($studentid);
 
+        // If the student is not found, return an error
+        if (!$student) {
+            throw new HttpException(404, 'Student not found');
+        }
+
+        // Get the trips of the student
+        $trips = $student->getParticipate();
+
+        // Create an array to store the trips data
+        $data = [];
+
+        // Loop through the trips and add the data to the array
+        foreach ($trips as $trip) {
+            $data[] = [
+                'id' => $trip->getId(),
+                'name' => $trip->getDrive()->getFirstname() . ' ' . $trip->getDrive()->getName(), // Include the driver's full name
+                'drive_id' => $trip->getDrive()->getId(),
+                'start_id' => $trip->getStart()->getId(),
+                'arrive_id' => $trip->getArrive()->getId(),
+                'kmdistance' => $trip->getKmDistance(),
+                'traveldate' => $trip->getTravelDate()->format('Y-m-d H:i:s'),
+                'placesoffered' => $trip->getPlacesOffered(),
+            ];
+        }
+
+        // Return the trips data
+        return $this->json($data);
+    }
+
+
+}
