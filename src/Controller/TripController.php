@@ -361,5 +361,93 @@ class TripController extends AbstractController
         return $this->json($data);
     }
 
+    /**
+     * Delete a trip
+     * @param Request $request The request object
+     * @param int $id The trip id
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/deletetrajet/{id}', name: 'app_trip_delete', methods: ['DELETE'])]
+    public function deleteTrip(Request $request, int $id, EntityManagerInterface $em): JsonResponse
+    {
+        // Get the trip from the database
+        $trip = $em->getRepository(Trip::class)->find($id);
 
+        // If the trip is not found, return an error
+        if (!$trip) {
+            throw new HttpException(404, 'Trip not found');
+        }
+
+        // Remove the trip from the database
+        $em->remove($trip);
+        $em->flush();
+
+        // Return a success message
+        return $this->json([
+            'message' => 'Trip deleted',
+        ]);
+    }
+
+    /**
+     * Delete a participation
+     * @param Request $request The request object
+     * @param int $tripid The trip id
+     * @param int $studentid The student id
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/deleteinscription/{tripid}/{studentid}', name: 'app_trip_delete_participation', methods: ['DELETE'])]
+    public function deleteParticipation(Request $request, int $tripid, int $studentid, EntityManagerInterface $em): JsonResponse
+    {
+        try {
+            $trip = $em->getRepository(Trip::class)->find($tripid);
+            $student = $em->getRepository(Student::class)->find($studentid);
+
+            if (!$trip || !$student) {
+                throw new HttpException(404, 'Trip or Student not found');
+            }
+
+            // Check if the student is participating in the trip
+            if (!$trip->getParticipate()->contains($student)) {
+                throw new HttpException(404, 'The student is not participating in this trip');
+            }
+
+            // Remove the student from the trip
+            $trip->removeParticipate($student);
+
+            $em->persist($trip);
+            $em->flush();
+        } catch (Exception $e) {
+            throw new HttpException(400, "Error while deleting the participation: " . $e->getMessage());
+        }
+
+        return $this->json([
+            'message' => 'Participation deleted',
+        ]);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
