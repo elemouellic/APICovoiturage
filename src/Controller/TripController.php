@@ -144,7 +144,6 @@ class TripController extends AbstractController
         ], 201);
     }
 
-// todo gérer le problème du datetime
     /**
      * Search for trips
      * @param Request $request The request object
@@ -169,23 +168,38 @@ public function searchTrip(Request $request, int $idCityStart, int $idCityArriva
         throw new HttpException(404, 'Arrival city not found');
     }
 
-    try{
-        $travelDate = new DateTime($dateTravel);
-    } catch (Exception $e) {
-        throw new HttpException(400, 'Invalid date format');
+    // Create DateTime objects for the start and end of the travel date
+    $travelDateStart = DateTime::createFromFormat('Y-m-d H:i:s', $dateTravel . ' 00:00:00');
+    if (!$travelDateStart) {
+        throw new HttpException(400, 'Invalid date format. Expected format is Y-m-d.');
     }
 
-    // Get the trips from the database
-    $trips = $em->getRepository(Trip::class)->findBy([
+    $travelDateEnd = DateTime::createFromFormat('Y-m-d H:i:s', $dateTravel . ' 23:59:59');
+    if (!$travelDateEnd) {
+        throw new HttpException(400, 'Invalid date format. Expected format is Y-m-d.');
+    }
+
+    // Get the trips from the database with the given start, arrive and travel date
+    $query = $em->createQuery(
+        'SELECT t
+        FROM App\Entity\Trip t
+        WHERE t.start = :start
+        AND t.arrive = :arrive
+        AND t.traveldate BETWEEN :travelDateStart AND :travelDateEnd'
+    )->setParameters([
         'start' => $start,
         'arrive' => $arrive,
-        'traveldate' => $travelDate,
+        'travelDateStart' => $travelDateStart,
+        'travelDateEnd' => $travelDateEnd,
     ]);
+
+    $trips = $query->getResult();
 
     if (!$trips) {
         throw new HttpException(404, 'No trip found');
     }
 
+    // Prepare the trips data
     $data = [];
     foreach ($trips as $trip) {
         $data[] = [
@@ -194,7 +208,7 @@ public function searchTrip(Request $request, int $idCityStart, int $idCityArriva
             'start_id' => $trip->getStart()->getId(),
             'arrive_id' => $trip->getArrive()->getId(),
             'kmdistance' => $trip->getKmDistance(),
-            'traveldate' => $trip->getTravelDate()->format('Y-m-d'),
+            'traveldate' => $trip->getTravelDate()->format('Y-m-d H:i:s'), // Include the full date and time
             'placesoffered' => $trip->getPlacesOffered(),
         ];
     }
