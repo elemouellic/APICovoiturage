@@ -64,17 +64,18 @@ class StudentController extends AbstractController
     #[Route('/insertpersonne', name: 'app_student_insert', methods: ['POST'])]
     public function insertStudent(Request $request, EntityManagerInterface $em): JsonResponse
     {
-
         // Serialize the request data
         $data = Utils::serializeRequestData($request);
 
         // Check if all necessary fields are present and not empty
-        if (empty($data['firstname']) || empty($data['name']) || empty($data['phone']) || empty($data['email']) || empty($data['cityId']) || empty($data['carId'])) {
+        if (empty($data['firstname']) || empty($data['name']) || empty($data['phone']) || empty($data['email']) || empty($data['cityId'])) {
             throw new HttpException(400, 'Missing required fields.');
         } else {
+            // Optional car possession
+            $carId = $data['carId'] ?? null;
 
             // Create a new student
-            $student = $this->createStudent($data['firstname'], $data['name'], $data['phone'], $data['email'], $data['cityId'], $data['carId'], $em);
+            $student = $this->createStudent($data['firstname'], $data['name'], $data['phone'], $data['email'], $data['cityId'], $carId, $em);
 
             // Return the created student data
             return $this->json([
@@ -84,8 +85,60 @@ class StudentController extends AbstractController
                 'phone' => $student->getPhone(),
                 'email' => $student->getEmail(),
                 'city' => $student->getLive()->getName(),
-                'car' => $student->getPossess()->getModel(),
+                'car' => $student->getPossess()?->getModel(),
             ], 201);
+        }
+    }
+
+    /**
+     * Update a student
+     * @param Request $request The request object
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/updatepersonne', name: 'app_student_update', methods: ['PUT'])]
+    public function updateStudent(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $data = Utils::serializeRequestData($request);
+
+        if (empty($data['id']) || empty($data['firstname']) || empty($data['name']) || empty($data['phone']) || empty($data['email']) || empty($data['cityId'])) {
+            throw new HttpException(400, 'Missing required fields.');
+        } else {
+            $student = $em->getRepository(Student::class)->find($data['id']);
+            if (!$student) {
+                throw new HttpException(404, 'Student not found');
+            }
+            $student->setFirstname($data['firstname']);
+            $student->setName($data['name']);
+            $student->setPhone($data['phone']);
+            $student->setEmail($data['email']);
+            $city = $em->getRepository(City::class)->find($data['cityId']);
+            if (!$city) {
+                throw new HttpException(404, 'City not found');
+            }
+            $student->setLive($city);
+
+            if (!empty($data['carId'])) {
+                $car = $em->getRepository(Car::class)->find($data['carId']);
+                if (!$car) {
+                    throw new HttpException(404, 'Car not found');
+                }
+                $student->setPossess($car);
+            } else {
+                $student->setPossess(null);
+            }
+
+            $em->persist($student);
+            $em->flush();
+            return $this->json([
+                'id' => $student->getId(),
+                'firstname' => $student->getFirstname(),
+                'name' => $student->getName(),
+                'phone' => $student->getPhone(),
+                'email' => $student->getEmail(),
+                'city' => $student->getLive()->getName(),
+                'car' => $student->getPossess() ? $student->getPossess()->getModel() : null,
+            ], 200);
         }
     }
 
@@ -139,7 +192,7 @@ class StudentController extends AbstractController
             $em->persist($student);
             $em->flush();
         } catch (Exception $e) {
-            throw new HttpException(400, 'An error occurred while creating the student.');
+            throw new HttpException(400, $e->getMessage());
         }
 
         // Return the created Student
