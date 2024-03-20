@@ -291,5 +291,75 @@ class TripController extends AbstractController
         return $this->json($data);
     }
 
+    /**
+     * Get all the participations
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/listeinscription', name: 'app_trip_list_participation', methods: ['GET'])]
+    public function listAllParticipations(EntityManagerInterface $em): JsonResponse
+    {
+        // Get all the trips from the database
+        $trips = $em->getRepository(Trip::class)->findAll();
+
+        // Create an array to store the participations data
+        $data = [];
+
+        // Loop through the trips
+        foreach ($trips as $trip) {
+            // Get the students participating in the trip
+            $students = $trip->getParticipate();
+
+            // Loop through the students and add the data to the array
+            foreach ($students as $student) {
+                $data[] = [
+                    'trip_id' => $trip->getId(),
+                    'student_id' => $student->getId(),
+                    'student_name' => $student->getFirstname() . ' ' . $student->getName(),
+                    'drive_id' => $trip->getDrive()->getId(),
+                    'start_id' => $trip->getStart()->getId(),
+                    'arrive_id' => $trip->getArrive()->getId(),
+                    'kmdistance' => $trip->getKmDistance(),
+                    'traveldate' => $trip->getTravelDate()->format('Y-m-d H:i:s'),
+                    'placesoffered' => $trip->getPlacesOffered(),
+                ];
+            }
+        }
+
+        // Return the participations data
+        return $this->json($data);
+    }
+
+    /**
+     * Get all the trips
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/listetrajet', name: 'app_trip_list', methods: ['GET'])]
+    public function listAllTrips(EntityManagerInterface $em): JsonResponse
+    {
+        // Get all the trips from the database
+        $trips = $em->getRepository(Trip::class)->findAll();
+
+        // Create an array to store the trips data
+        $data = [];
+
+        // Loop through the trips and add the data to the array
+        foreach ($trips as $trip) {
+            $data[] = [
+                'id' => $trip->getId(),
+                'drive_id' => $trip->getDrive()->getId(),
+                'start_id' => $trip->getStart()->getId(),
+                'arrive_id' => $trip->getArrive()->getId(),
+                'kmdistance' => $trip->getKmDistance(),
+                'traveldate' => $trip->getTravelDate()->format('Y-m-d H:i:s'),
+                'placesoffered' => $trip->getPlacesOffered(),
+            ];
+        }
+
+        // Return the trips data
+        return $this->json($data);
+    }
+
 
 }
