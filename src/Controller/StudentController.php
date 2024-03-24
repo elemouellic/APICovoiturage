@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Car;
 use App\Entity\City;
 use App\Entity\Student;
+use App\Entity\User;
 use App\Utils\Utils;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -142,7 +143,7 @@ class StudentController extends AbstractController
         }
 
         // Check if the student is an admin
-        if(in_array('ROLE_ADMIN', $student->getRegister()->getRoles())){
+        if (in_array('ROLE_ADMIN', $student->getRegister()->getRoles())) {
             throw new HttpException(403, 'You are not allowed to delete an admin');
         }
 
@@ -167,6 +168,7 @@ class StudentController extends AbstractController
     public function getStudent(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $id = $request->get('id');
+
         $student = $em->getRepository(Student::class)->find($id);
         if (!$student) {
             throw new HttpException(404, 'Student not found');
@@ -179,6 +181,44 @@ class StudentController extends AbstractController
             'email' => $student->getEmail(),
             'city' => $student->getLive()->getName(),
             'car' => $student->getPossess() ? $student->getPossess()->getModel() : null,
+        ]);
+    }
+
+
+    // todo this route is a new route with a query builder which was not present in the original code
+    /**
+     * Get a student by user id
+     * @param int $userId The user id
+     * @param EntityManagerInterface $em The entity manager
+     * @return JsonResponse The response
+     */
+    #[Route('/selectpersonne/user/{userId}', name: 'app_student_get_by_user', methods: ['GET'])]
+    public function getStudentByUser(int $userId, EntityManagerInterface $em): JsonResponse
+    {
+        // Create a query with a join
+        $query = $em->createQueryBuilder()
+            ->select('s')
+            ->from(Student::class, 's')
+            ->where('s.register = :userId')
+            ->setParameter('userId', $userId)
+            ->getQuery();
+
+        // Get the student associated with the user
+        $student = $query->getOneOrNullResult();
+
+        if (!$student) {
+            throw new HttpException(404, 'Student not found');
+        }
+
+        return $this->json([
+            'id' => $student->getId(),
+            'firstname' => $student->getFirstname(),
+            'name' => $student->getName(),
+            'phone' => $student->getPhone(),
+            'email' => $student->getEmail(),
+            'city' => $student->getLive()->getName(),
+            'car' => $student->getPossess() ? $student->getPossess()->getModel() : null,
+            'userId' => $userId, // Add the user ID to the response
         ]);
     }
 
