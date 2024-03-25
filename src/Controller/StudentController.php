@@ -184,7 +184,7 @@ class StudentController extends AbstractController
             'email' => $student->getEmail(),
             'city' => $student->getLive()->getName(),
             'car' => $student->getPossess() ? $student->getPossess()->getModel() : null,
-            'userId' => $userId, // Add the user ID to the response
+            'userId' => $userId
         ]);
     }
 
