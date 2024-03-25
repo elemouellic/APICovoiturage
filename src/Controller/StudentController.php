@@ -165,50 +165,16 @@ class StudentController extends AbstractController
      * @return JsonResponse The response
      */
     #[Route('/selectpersonne/{id}', name: 'app_student_get', methods: ['GET'])]
-    public function getStudent(Request $request, EntityManagerInterface $em): JsonResponse
+    public function getStudent(int $userId, Request $request, EntityManagerInterface $em): JsonResponse
     {
-        $id = $request->get('id');
-
-        $student = $em->getRepository(Student::class)->find($id);
-        if (!$student) {
-            throw new HttpException(404, 'Student not found');
-        }
-        return $this->json([
-            'id' => $student->getId(),
-            'firstname' => $student->getFirstname(),
-            'name' => $student->getName(),
-            'phone' => $student->getPhone(),
-            'email' => $student->getEmail(),
-            'city' => $student->getLive()->getName(),
-            'car' => $student->getPossess() ? $student->getPossess()->getModel() : null,
-        ]);
-    }
-
-
-    // todo this route is a new route with a query builder which was not present in the original code
-    /**
-     * Get a student by user id
-     * @param int $userId The user id
-     * @param EntityManagerInterface $em The entity manager
-     * @return JsonResponse The response
-     */
-    #[Route('/selectpersonne/user/{userId}', name: 'app_student_get_by_user', methods: ['GET'])]
-    public function getStudentByUser(int $userId, EntityManagerInterface $em): JsonResponse
-    {
-        // Create a query with a join
-        $query = $em->createQueryBuilder()
-            ->select('s')
-            ->from(Student::class, 's')
-            ->where('s.register = :userId')
-            ->setParameter('userId', $userId)
-            ->getQuery();
-
         // Get the student associated with the user
-        $student = $query->getOneOrNullResult();
+        $student = $em->getRepository(Student::class)->findOneBy(['register' => $userId]);
 
         if (!$student) {
             throw new HttpException(404, 'Student not found');
         }
+
+        $userId = $student->getRegister()->getId(); // Get the user ID
 
         return $this->json([
             'id' => $student->getId(),
