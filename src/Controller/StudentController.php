@@ -164,7 +164,7 @@ class StudentController extends AbstractController
      * @param EntityManagerInterface $em The entity manager
      * @return JsonResponse The response
      */
-    #[Route('/selectpersonne/{id}', name: 'app_student_get', methods: ['GET'])]
+    #[Route('/selectpersonne/{userId}', name: 'app_student_get', methods: ['GET'])]
     public function getStudent(int $userId, Request $request, EntityManagerInterface $em): JsonResponse
     {
         // Get the student associated with the user
@@ -187,6 +187,7 @@ class StudentController extends AbstractController
             'userId' => $userId
         ]);
     }
+
 
     /**
      * List all the students
